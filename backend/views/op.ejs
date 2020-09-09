@@ -1,0 +1,38 @@
+<div id="video"></div>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/2.3.0/socket.io.js"></script>
+<script src="https://unpkg.com/peerjs@1.3.1/dist/peerjs.min.js"></script>
+<script>
+    ;
+    (async() => {
+        const myVideo = document.createElement('video');
+        document.querySelector("#video").appendChild(myVideo);
+        // myVideo.muted = true;
+        const stream = await navigator.mediaDevices.getUserMedia({
+            video: true,
+            audio: true
+        });
+
+        myVideo.srcObject = stream;
+        myVideo.addEventListener('loadedmetadata', () => myVideo.play())
+
+        const peer = new Peer(undefined, {
+            host: 'alpha.tyze.me',
+            port: 9000,
+            path: '/myapp'
+        });
+
+        peer.on('open', function(id) {
+            const socket = io();
+
+            socket.on('connect', () => {
+                console.log('已連線');
+                socket.emit('start-stream', id);
+            })
+
+            socket.on('join-stream', (peerId) => {
+                const call = peer.call(peerId, stream);
+            });
+        });
+
+    })();
+</script>
